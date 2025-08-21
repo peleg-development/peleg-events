@@ -238,10 +238,7 @@ local function startCarSumoEvent(eventId)
                         local killerName = "Gravity"
                         if killerId then
                             killerName = GetPlayerName(killerId)
-                            print("^3[Server] Player " .. killerName .. " pushed " .. GetPlayerName(playerId) .. " off the platform^7")
                             TriggerEvent('peleg-events:addKill', eventId, killerId, playerId)
-                        else
-                            print("^3[Server] Player " .. GetPlayerName(playerId) .. " fell off the platform^7")
                         end
 
                         TriggerEvent('peleg-events:playerDied', eventId, playerId)
@@ -265,8 +262,6 @@ local function startCarSumoEvent(eventId)
 
                         if aliveCount <= 1 then
                             local winnerId = lastAlivePlayer
-                            print("^2[CarSumo] Event finished! Winner: " .. winnerId .. " (" .. GetPlayerName(winnerId) .. ")^7")
-                            print("^2[CarSumo] Calling finishEvent for event: " .. eventId .. " with winner: " .. winnerId .. "^7")
                             finishEvent(eventId, winnerId)
 
                             if carSumoEvents[eventId] and carSumoEvents[eventId].participants then
@@ -335,24 +330,20 @@ local function handleCarSumoPlayerDeath(eventId, playerId)
     end
 end
 
---- Event handler: start Car Sumo event by ID.
 RegisterNetEvent('peleg-events:startCarSumo', function(eventId)
     startCarSumoEvent(eventId)
 end)
 
---- Event handler: mark the source player as dead within the event.
 RegisterNetEvent('peleg-events:carSumoPlayerDied', function(eventId)
     local source = source
     handleCarSumoPlayerDeath(eventId, source)
 end)
 
---- Event handler: mark the source player as eliminated due to falling.
 RegisterNetEvent('peleg-events:carSumoPlayerFell', function(eventId)
     local source = source
     handleCarSumoPlayerDeath(eventId, source)
 end)
 
---- Event handler: the source player pushed a victim off; logs a kill feed entry and eliminates the victim.
 RegisterNetEvent('peleg-events:carSumoPlayerPushed', function(eventId, victimId)
     local source = source
     local killerName = GetPlayerName(source)
@@ -369,20 +360,15 @@ RegisterNetEvent('peleg-events:carSumoPlayerPushed', function(eventId, victimId)
     handleCarSumoPlayerDeath(eventId, victimId)
 end)
 
---- Event handler: track last damage source to attribute eliminations when victims fall.
 RegisterNetEvent('peleg-events:carSumoVehicleDamaged', function(eventId, victimId)
     local source = source
     if carSumoEvents[eventId] then
         carSumoEvents[eventId].vehicleDamage[victimId] = source
-        print("^3[Server] Player " .. GetPlayerName(source) .. " damaged " .. GetPlayerName(victimId) .. "'s vehicle^7")
     end
 end)
 
---- Cleanup handler: removes platform, restores players (position, bucket, health/armor, flags), and signals end.
 RegisterNetEvent('peleg-events:cleanupCarSumo', function(eventId)
     if carSumoEvents[eventId] then
-        print("^3[CarSumo] Cleaning up event: " .. eventId .. "^7")
-
         removeCarSumoPlatform(eventId)
 
         local event = exports['peleg-events']:getActiveEvents()[eventId]
@@ -398,7 +384,6 @@ RegisterNetEvent('peleg-events:cleanupCarSumo', function(eventId)
                     SetPlayerRoutingBucket(participant.id, participant.originalBucket or 0)
 
                     FreezeEntityPosition(GetPlayerPed(participant.id), false)
-                    print("^3[CarSumo] Restored player " .. participant.id .. " to original state^7")
                 end
             end
         end

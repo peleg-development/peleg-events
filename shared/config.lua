@@ -2,8 +2,8 @@ Config = {}
 
 -- Event System Configuration
 Config.AuthorizedLicenses = {
-    "license:1ce314a6a960deaba431fd40484c4726de96fbb8", -- Replace with actual authorized licenses
-    "license:0987654321fedcba"
+    "license:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", -- Replace with actual authorized licenses
+    "license:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 }
 
 Config.Events = {
@@ -150,4 +150,4 @@ Config.UI = {
 Config.Framework = "auto" -- auto, esx, qbcore, standalone
 
 
-Config.Debug = true
+Config.Debug = false

@@ -332,20 +332,6 @@ CreateThread(function()
     end
 end)
 
---- Background thread: detect player death while in an event
-CreateThread(function()
-    while true do
-        Wait(1000)
-        if isInEvent and currentEventId then
-            local ped = PlayerPedId()
-            if IsEntityDead(ped) then
-                TriggerServerEvent('peleg-events:carSumoPlayerDied', currentEventId)
-                TriggerServerEvent('peleg-events:redzonePlayerDied', currentEventId)
-            end
-        end
-    end
-end)
-
 CreateThread(function()
     while true do
         if (globalJoinPanelVisible and currentJoinEventId) or (eventJoinPanelVisible and currentJoinEventId) then

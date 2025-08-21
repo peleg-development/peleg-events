@@ -90,10 +90,13 @@ end
 --- 4) performs countdown, 5) starts zone shrinking, 6) begins elimination loop
 ---@param eventId string Event identifier
 local function startRedzoneEvent(eventId)
+    print("^3[Redzone] Starting redzone event: " .. tostring(eventId) .. "^7")
     local event = exports['peleg-events']:getActiveEvents()[eventId]
     if not event then
+        print("^1[Redzone] Event not found: " .. tostring(eventId) .. "^7")
         return
     end
+    print("^3[Redzone] Event found with " .. #event.participants .. " participants^7")
 
     if #event.participants < 2 then
         print("^1[Redzone] Not enough players to start event (need at least 2)^7")
@@ -127,6 +130,7 @@ local function startRedzoneEvent(eventId)
         zoneShrinkStartTime = GetGameTimer(),
         zoneShrinkDuration = 300000
     }
+    print("^3[Redzone] Event initialized: " .. tostring(eventId) .. "^7")
 
     local eventBucket = 2000 + (tonumber(eventId:match("%d+")) or math.random(1000, 9999))
 
@@ -144,6 +148,7 @@ local function startRedzoneEvent(eventId)
         
         TriggerClientEvent('peleg-events:spawnRedzonePlayer', participant.id, eventId, spawnPos)
         redzoneEvents[eventId].alivePlayers[participant.id] = true
+        print("^3[Redzone] Player " .. participant.id .. " marked as alive^7")
 
         SetTimeout(1000, function()
             if GetPlayerPed(participant.id) then
@@ -222,11 +227,14 @@ end
 ---@param eventId string Event identifier
 ---@param playerId number Server ID of the player being eliminated
 local function handleRedzonePlayerDeath(eventId, playerId)
+    print("^3[Redzone] handleRedzonePlayerDeath called: eventId=" .. tostring(eventId) .. ", playerId=" .. tostring(playerId) .. "^7")
     if not redzoneEvents[eventId] or not redzoneEvents[eventId].alivePlayers[playerId] then
+        print("^1[Redzone] Player death ignored - event not found or player not alive^7")
         return
     end
 
     redzoneEvents[eventId].alivePlayers[playerId] = false
+    print("^3[Redzone] Player " .. playerId .. " marked as dead^7")
 
     local spectatorPos = vector3(
         redzoneEvents[eventId].zoneCenter.x,
@@ -239,14 +247,6 @@ local function handleRedzonePlayerDeath(eventId, playerId)
     TriggerClientEvent('peleg-events:removeRedzoneWeapon', playerId, eventId)
 
     TriggerEvent('peleg-events:playerDied', eventId, playerId)
-
-    TriggerClientEvent('peleg-events:addKillFeed', -1, {
-        killer = "Zone",
-        victim = GetPlayerName(playerId),
-        eventType = "Redzone"
-    })
-
-    TriggerClientEvent('peleg-events:playerEliminated', -1, eventId, playerId, GetPlayerName(playerId))
 
     local aliveCount = 0
     local lastAlivePlayer = nil
@@ -271,24 +271,41 @@ end)
 
 RegisterNetEvent('peleg-events:redzonePlayerDied', function(eventId)
     local source = source
+    
     handleRedzonePlayerDeath(eventId, source)
+    TriggerClientEvent('peleg-events:addKillFeed', -1, {
+        killer = "Zone",
+        victim = GetPlayerName(source),
+        eventType = "Redzone"
+    })
+
+    TriggerClientEvent('peleg-events:playerEliminated', -1, eventId, source, GetPlayerName(source))
 end)
 
 RegisterNetEvent('peleg-events:redzonePlayerKilled', function(eventId, victimId)
+    local source = source
+    local killerId = tonumber(source)
+    local victimId = tonumber(victimId)
+    print("^3[Redzone] Kill event received: eventId=" .. tostring(eventId) .. ", killer=" .. tostring(killerId) .. " (type: " .. type(killerId) .. "), victim=" .. tostring(victimId) .. "^7")
+    print("^3[Redzone] Event exists: " .. tostring(redzoneEvents[eventId] ~= nil) .. "^7")
+    if redzoneEvents[eventId] then
+        print("^3[Redzone] Victim alive: " .. tostring(redzoneEvents[eventId].alivePlayers[victimId]) .. "^7")
+    end
+    
     if redzoneEvents[eventId] and redzoneEvents[eventId].alivePlayers[victimId] then
-        local source = source
-        local killerName = GetPlayerName(source)
+        local killerName = GetPlayerName(killerId)
         local victimName = GetPlayerName(victimId)
+        handleRedzonePlayerDeath(eventId, victimId)
 
         TriggerClientEvent('peleg-events:addKillFeed', -1, {
             killer = killerName,
             victim = victimName,
             eventType = "Redzone"
         })
-
-        handleRedzonePlayerDeath(eventId, victimId)
-
-        TriggerEvent('peleg-events:addKill', eventId, source, victimId)
+        print("^3[Redzone] Player " .. killerName .. " killed " .. victimName .. "^7")
+        TriggerEvent('peleg-events:addKill', eventId, killerId, victimId)
+    else
+        print("^1[Redzone] Kill event ignored - event not found or victim not alive^7")
     end
 end)
 

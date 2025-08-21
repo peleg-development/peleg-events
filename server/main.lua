@@ -55,6 +55,8 @@ end
 --- @param killerId number
 --- @param victimId number
 local function addKill(eventId, killerId, victimId)
+    print("^3[Main] addKill called: eventId=" .. tostring(eventId) .. ", killerId=" .. tostring(killerId) .. " (type: " .. type(killerId) .. "), victimId=" .. tostring(victimId) .. "^7")
+    
     if not eventKills[eventId] then
         eventKills[eventId] = {}
     end
@@ -62,6 +64,8 @@ local function addKill(eventId, killerId, victimId)
         eventKills[eventId][killerId] = 0
     end
     eventKills[eventId][killerId] = eventKills[eventId][killerId] + 1
+    print("^3[Main] Updated kills for event " .. tostring(eventId) .. ": " .. json.encode(eventKills[eventId]) .. "^7")
+    print("^3[Main] Killer " .. tostring(killerId) .. " now has " .. tostring(eventKills[eventId][killerId]) .. " kills^7")
     TriggerClientEvent('peleg-events:updateKillsCounter', killerId, { kills = eventKills[eventId][killerId], isVisible = true })
 end
 
@@ -69,8 +73,12 @@ end
 --- @param eventId string
 --- @return table|nil
 local function getEventStats(eventId)
+    print("^3[Main] getEventStats called for event: " .. tostring(eventId) .. "^7")
     local event = getActiveEvent(eventId)
-    if not event then return nil end
+    if not event then 
+        print("^1[Main] Event not found in getEventStats^7")
+        return nil 
+    end
 
     local stats = { eventId = eventId, eventType = event.type, players = {}, duration = 0 }
     local currentTime = os.time()
@@ -78,10 +86,20 @@ local function getEventStats(eventId)
     stats.duration = currentTime - startTime
 
     local kills = eventKills[eventId] or {}
+    print("^3[Main] Kills data for event " .. eventId .. ": " .. json.encode(kills) .. "^7")
+    print("^3[Main] Event participants: " .. #event.participants .. "^7")
+    print("^3[Main] Kills data type: " .. type(kills) .. "^7")
+    print("^3[Main] Kills keys: " .. json.encode({}) .. "^7")
+    for k, v in pairs(kills) do
+        print("^3[Main] Kill key: " .. tostring(k) .. " (type: " .. type(k) .. "), value: " .. tostring(v) .. "^7")
+    end
+    
     for _, participant in pairs(event.participants) do
         local playerKills = kills[participant.id] or 0
         local timeAlive = participant.deathTime and (participant.deathTime - startTime) or stats.duration
         local playerName = GetPlayerName(participant.id) or "Unknown Player"
+        print("^3[Main] Player " .. participant.id .. " (" .. playerName .. "): " .. playerKills .. " kills, deathTime=" .. tostring(participant.deathTime) .. "^7")
+        print("^3[Main] Looking for kills[" .. tostring(participant.id) .. "] (type: " .. type(participant.id) .. ")^7")
         table.insert(stats.players, {
             id = participant.id,
             name = playerName,
@@ -296,8 +314,10 @@ end
 --- @param eventId string
 --- @param winnerId number|nil
 function finishEvent(eventId, winnerId)
+    print("^3[Main] finishEvent called: eventId=" .. tostring(eventId) .. ", winnerId=" .. tostring(winnerId) .. "^7")
     local event = getActiveEvent(eventId)
     if not event then
+        print("^1[Main] Event not found in finishEvent^7")
         return
     end
 
@@ -307,8 +327,10 @@ function finishEvent(eventId, winnerId)
 
     local stats = getEventStats(eventId)
     if not stats then
+        print("^1[Main] Failed to get event stats^7")
         return
     end
+    print("^3[Main] Event stats generated successfully^7")
 
     Citizen.CreateThread(function()
         Wait(2500)
@@ -577,11 +599,16 @@ RegisterNetEvent('peleg-events:addKill', function(eventId, killerId, victimId)
 end)
 
 RegisterNetEvent('peleg-events:playerDied', function(eventId, playerId)
+    print("^3[Main] playerDied event received: eventId=" .. tostring(eventId) .. ", playerId=" .. tostring(playerId) .. "^7")
     local event = getActiveEvent(eventId)
-    if not event then return end
+    if not event then 
+        print("^1[Main] Event not found in playerDied handler^7")
+        return 
+    end
     for _, participant in pairs(event.participants) do
         if participant.id == playerId then
             participant.deathTime = os.time()
+            print("^3[Main] Set deathTime for player " .. playerId .. " to " .. os.time() .. "^7")
             break
         end
     end

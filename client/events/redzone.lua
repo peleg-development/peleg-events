@@ -159,6 +159,8 @@ RegisterNetEvent('peleg-events:damageRedzonePlayer', function(eventId, damage)
             newHealth = 0
         end
         
+        SetEntityHealth(ped, newHealth)
+
         if newHealth <= 0 then
             TriggerServerEvent('peleg-events:redzonePlayerDied', eventId)
         end
@@ -246,30 +248,34 @@ end)
 local killTracker = {}
 
 AddEventHandler('gameEventTriggered', function(eventName, data)
-    if eventName == 'CEventNetworkEntityDamage' and currentRedzoneEvent then
+    if eventName == 'CEventNetworkEntityDamage' and currentRedzoneEvent and (currentEventId == currentRedzoneEvent or joinedEventId == currentRedzoneEvent) then
         local victim = data[1]
         local attacker = data[2]
         local isDead = data[4]
         local weapon = data[5]
         local isMelee = data[10]
-        
+       
         if isDead and DoesEntityExist(victim) and DoesEntityExist(attacker) then
             local victimType = GetEntityType(victim)
             local attackerType = GetEntityType(attacker)
-            
+           
             if victimType == 1 and attackerType == 1 and IsPedAPlayer(victim) and IsPedAPlayer(attacker) then
                 local playerPed = PlayerPedId()
-                
+               
                 if attacker == playerPed then
-                    local victimPlayerId = NetworkGetPlayerIndexFromPed(victim)
-                    local victimServerId = GetPlayerServerId(victimPlayerId)
-                    local now = GetGameTimer()
-                    local key = victimServerId
-                    
-                    if not killTracker[key] or (now - killTracker[key]) > 1000 then
-                        killTracker[key] = now
-                        TriggerServerEvent('peleg-events:redzonePlayerKilled', currentRedzoneEvent, victimServerId)
-                        TriggerServerEvent('peleg-events:redzoneKillReward', currentRedzoneEvent)
+                    -- Check if victim is actually dead
+                    if IsEntityDead(victim) or IsPedDeadOrDying(victim, true) then
+                        local victimPlayerId = NetworkGetPlayerIndexFromPed(victim)
+                        local victimServerId = GetPlayerServerId(victimPlayerId)
+                        local now = GetGameTimer()
+                        local key = victimServerId
+                       
+                        if not killTracker[key] or (now - killTracker[key]) > 1000 then
+                            killTracker[key] = now
+                            print("^3[Client] Redzone kill detected: " .. victimServerId .. " by player^7")
+                            TriggerServerEvent('peleg-events:redzonePlayerKilled', currentRedzoneEvent, victimServerId)
+                            TriggerServerEvent('peleg-events:redzoneKillReward', currentRedzoneEvent)
+                        end
                     end
                 end
             end
@@ -287,13 +293,6 @@ CreateThread(function()
             if HasPedGotWeapon(ped, weaponHash, false) then
                 SetPedInfiniteAmmo(ped, true, weaponHash)
                 SetPedInfiniteAmmoClip(ped, true)
-            end
-        end
-        
-        if currentRedzoneEvent and (currentEventId == currentRedzoneEvent or joinedEventId == currentRedzoneEvent) then
-            local ped = PlayerPedId()
-            if IsEntityDead(ped) then
-                TriggerServerEvent('peleg-events:redzonePlayerDied', currentRedzoneEvent)
             end
         end
     end
