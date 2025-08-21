@@ -346,36 +346,40 @@ CreateThread(function()
     end
 end)
 
---- Background thread: keybind logic for join/leave and dismiss panels
---- Uses: G (control 47) to Join/Leave; H (control 74) to Dismiss panels
 CreateThread(function()
     while true do
-        Wait(0)
-        if IsControlJustPressed(0, 47) then
-            if globalJoinPanelVisible and currentJoinEventId then
-                if joinedEventId == currentJoinEventId then
-                    TriggerServerEvent('peleg-events:leaveEvent', currentJoinEventId)
-                else
-                    TriggerServerEvent('peleg-events:joinEvent', currentJoinEventId)
-                end
-            elseif eventJoinPanelVisible and currentJoinEventId then
-                if joinedEventId == currentJoinEventId then
-                    TriggerServerEvent('peleg-events:leaveEvent', currentJoinEventId)
-                else
-                    TriggerServerEvent('peleg-events:joinEvent', currentJoinEventId)
+        if (globalJoinPanelVisible and currentJoinEventId) or (eventJoinPanelVisible and currentJoinEventId) then
+            Wait(0)
+            
+            if IsControlJustPressed(0, 47) then
+                if globalJoinPanelVisible and currentJoinEventId then
+                    if joinedEventId == currentJoinEventId then
+                        TriggerServerEvent('peleg-events:leaveEvent', currentJoinEventId)
+                    else
+                        TriggerServerEvent('peleg-events:joinEvent', currentJoinEventId)
+                    end
+                elseif eventJoinPanelVisible and currentJoinEventId then
+                    if joinedEventId == currentJoinEventId then
+                        TriggerServerEvent('peleg-events:leaveEvent', currentJoinEventId)
+                    else
+                        TriggerServerEvent('peleg-events:joinEvent', currentJoinEventId)
+                    end
                 end
             end
-        end
-        if IsControlJustPressed(0, 74) then
-            if globalJoinPanelVisible then
-                globalJoinPanelVisible = false
-                currentJoinEventId = nil
-                SendNUIMessage({ action = "hideGlobalEventJoinPanel" })
-            elseif eventJoinPanelVisible then
-                eventJoinPanelVisible = false
-                currentJoinEventId = nil
-                SendNUIMessage({ action = "hideEventJoinPanel" })
+            
+            if IsControlJustPressed(0, 74) then
+                if globalJoinPanelVisible then
+                    globalJoinPanelVisible = false
+                    currentJoinEventId = nil
+                    SendNUIMessage({ action = "hideGlobalEventJoinPanel" })
+                elseif eventJoinPanelVisible then
+                    eventJoinPanelVisible = false
+                    currentJoinEventId = nil
+                    SendNUIMessage({ action = "hideEventJoinPanel" })
+                end
             end
+        else
+            Wait(1500)
         end
     end
 end)
