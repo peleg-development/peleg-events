@@ -11,7 +11,7 @@ Config.Events = {
         name = "Car Sumo",
         description = "Fight to the death in cars above the sky!",
         maxPlayers = 16,
-        minPlayers = 1,
+        minPlayers = 2,
         defaultReward = {
             type = "money",
             data = { amount = 5000 }
@@ -63,7 +63,7 @@ Config.Events = {
         name = "Redzone",
         description = "Last man standing in the redzone!",
         maxPlayers = 32,
-        minPlayers = 1,
+        minPlayers = 2,
         defaultReward = {
             type = "money",
             data = { amount = 10000 }
