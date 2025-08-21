@@ -335,7 +335,9 @@ function finishEvent(eventId, winnerId)
     Citizen.CreateThread(function()
         Wait(2500)
     for _, participant in pairs(event.participants) do
-        TriggerClientEvent('peleg-events:showScoreboard', participant.id, stats)
+        if event.type ~= "Redzone" and event.type ~= "Party" then
+            TriggerClientEvent('peleg-events:showScoreboard', participant.id, stats)
+        end
         TriggerClientEvent('peleg-events:hideKillsCounter', participant.id)
         if winnerId then
             local winnerName = GetPlayerName(winnerId)
