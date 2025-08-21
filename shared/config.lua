@@ -148,3 +148,6 @@ Config.UI = {
 
 -- Framework Detection
 Config.Framework = "auto" -- auto, esx, qbcore, standalone
+
+
+Config.Debug = false

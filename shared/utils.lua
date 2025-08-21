@@ -1,3 +1,10 @@
+local _print = print
+print = function(...)
+    if Config.Debug then
+        _print(...)
+    end
+end
+
 -- Framework detection and utility functions
 Framework = {}
 

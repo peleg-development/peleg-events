@@ -22,6 +22,42 @@ local function toggleUI(enabled)
     SendNUIMessage({ action = "setVisible", visible = enabled })
 end
 
+--- Block inventory during events
+--- @param blocked boolean Whether to block inventory access
+local function blockInventory(blocked)
+    if blocked then
+        -- QB-Core inventory blocking
+        if GetResourceState('qb-inventory') == 'started' then
+            exports['qb-inventory']:SetInventoryBlocked(true)
+        end
+        
+        -- ox_inventory blocking
+        if GetResourceState('ox_inventory') == 'started' then
+            exports.ox_inventory:SetInventoryBlocked(true)
+        end
+        
+        -- qs-inventory blocking
+        if GetResourceState('qs-inventory') == 'started' then
+            exports['qs-inventory']:SetInventoryBlocked(true)
+        end
+    else
+        -- QB-Core inventory unblocking
+        if GetResourceState('qb-inventory') == 'started' then
+            exports['qb-inventory']:SetInventoryBlocked(false)
+        end
+        
+        -- ox_inventory unblocking
+        if GetResourceState('ox_inventory') == 'started' then
+            exports.ox_inventory:SetInventoryBlocked(false)
+        end
+        
+        -- qs-inventory unblocking
+        if GetResourceState('qs-inventory') == 'started' then
+            exports['qs-inventory']:SetInventoryBlocked(false)
+        end
+    end
+end
+
 --- Open the UI and refresh events
 RegisterNetEvent('peleg-events:openUI', function()
     toggleUI(true)
@@ -120,6 +156,10 @@ RegisterNetEvent('peleg-events:playerJoined', function(eventId, playerId, player
     if playerId == GetPlayerServerId(PlayerId()) then
         joinedEventId = eventId
         isInEvent = true
+        
+        -- Block inventory when joining event
+        blockInventory(true)
+        
         if globalJoinPanelVisible and currentJoinEventId == eventId then
             SendNUIMessage({ action = "updateGlobalEventJoinPanel", hasJoined = true })
         elseif eventJoinPanelVisible and currentJoinEventId == eventId then
@@ -147,6 +187,9 @@ RegisterNetEvent('peleg-events:playerLeft', function(eventId, playerId)
         if joinedEventId == eventId then 
             joinedEventId = nil 
             isInEvent = false
+            
+            -- Unblock inventory when leaving event
+            blockInventory(false)
         end
         if globalJoinPanelVisible and currentJoinEventId == eventId then
             SendNUIMessage({ action = "updateGlobalEventJoinPanel", hasJoined = false })
@@ -171,6 +214,10 @@ end)
 RegisterNetEvent('peleg-events:carSumoStarted', function(eventId)
     if currentEventId == eventId then
         isInEvent = true
+        
+        -- Block inventory when event starts
+        blockInventory(true)
+        
         FreezeEntityPosition(PlayerPedId(), false)
         if globalJoinPanelVisible or eventJoinPanelVisible then
             globalJoinPanelVisible = false
@@ -192,6 +239,10 @@ end)
 RegisterNetEvent('peleg-events:redzoneStarted', function(eventId)
     if currentEventId == eventId or joinedEventId == eventId then
         isInEvent = true
+        
+        -- Block inventory when event starts
+        blockInventory(true)
+        
         if globalJoinPanelVisible or eventJoinPanelVisible then
             globalJoinPanelVisible = false
             eventJoinPanelVisible = false
@@ -203,6 +254,35 @@ RegisterNetEvent('peleg-events:redzoneStarted', function(eventId)
     end
 end)
 
+--- Car Sumo event ended for this client
+--- @param eventId string
+RegisterNetEvent('peleg-events:carSumoEventEnded', function(eventId)
+    if currentEventId == eventId or joinedEventId == eventId then
+        isInEvent = false
+        currentEventId = nil
+        joinedEventId = nil
+        
+        -- Unblock inventory when event ends
+        blockInventory(false)
+        
+        print("^3[Client] Car Sumo event ended^7")
+    end
+end)
+
+--- Redzone event ended for this client
+--- @param eventId string
+RegisterNetEvent('peleg-events:redzoneEventEnded', function(eventId)
+    if currentEventId == eventId or joinedEventId == eventId then
+        isInEvent = false
+        currentEventId = nil
+        joinedEventId = nil
+        
+        -- Unblock inventory when event ends
+        blockInventory(false)
+        
+        print("^3[Client] Redzone event ended^7")
+    end
+end)
 
 --- Show scoreboard and reset local event state
 --- @param scoreboardData {eventId:string, eventType:string, players:table, duration:number}
@@ -210,6 +290,10 @@ RegisterNetEvent('peleg-events:showScoreboard', function(scoreboardData)
     isInEvent = false
     currentEventId = nil
     joinedEventId = nil
+    
+    -- Unblock inventory when event ends
+    blockInventory(false)
+    
     SendNUIMessage({
         action = "showScoreboard",
         eventId = scoreboardData.eventId,
@@ -305,6 +389,10 @@ end)
 RegisterNetEvent('peleg-events:partyStarted', function(eventId)
     if currentEventId == eventId or joinedEventId == eventId then
         isInEvent = true
+        
+        -- Block inventory when event starts
+        blockInventory(true)
+        
         FreezeEntityPosition(PlayerPedId(), false)
         if globalJoinPanelVisible or eventJoinPanelVisible then
             globalJoinPanelVisible = false

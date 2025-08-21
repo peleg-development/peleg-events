@@ -267,6 +267,26 @@ local function handleRedzonePlayerDeath(eventId, playerId)
     end
 end
 
+--- Revive player after redzone event ends
+---@param playerId number Server ID of the player to revive
+local function revivePlayerAfterRedzone(playerId)
+    if not GetPlayerPed(playerId) then
+        return
+    end
+    
+    local ped = GetPlayerPed(playerId)
+    TriggerServerEvent('txsv:req:healMyself')
+
+    NetworkResurrectLocalPlayer(GetEntityCoords(ped), GetEntityHeading(ped), true, false)
+    SetEntityHealth(ped, 200)
+    SetPedArmour(ped, 0)
+    ClearPedBloodDamage(ped)
+    ClearPedTasksImmediately(ped)
+    
+    FreezeEntityPosition(ped, false)
+    
+end
+
 RegisterNetEvent('peleg-events:startRedzone', function(eventId)
     startRedzoneEvent(eventId)
 end)
@@ -321,9 +341,9 @@ RegisterNetEvent('peleg-events:cleanupRedzone', function(eventId)
 
                     FreezeEntityPosition(GetPlayerPed(participant.id), false)
                     
-                    TriggerClientEvent('peleg-events:restorePlayerHealth', participant.id)
+                    revivePlayerAfterRedzone(participant.id)
                     
-                    print("^3[Redzone] Restored player " .. participant.id .. " to original state^7")
+                    TriggerClientEvent('peleg-events:hideKillsCounter', participant.id)
                 end
             end
         end
