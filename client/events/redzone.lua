@@ -159,8 +159,6 @@ RegisterNetEvent('peleg-events:damageRedzonePlayer', function(eventId, damage)
             newHealth = 0
         end
         
-        SetEntityHealth(ped, newHealth)
-        
         if newHealth <= 0 then
             TriggerServerEvent('peleg-events:redzonePlayerDied', eventId)
         end
@@ -272,7 +270,6 @@ AddEventHandler('gameEventTriggered', function(eventName, data)
                         killTracker[key] = now
                         TriggerServerEvent('peleg-events:redzonePlayerKilled', currentRedzoneEvent, victimServerId)
                         TriggerServerEvent('peleg-events:redzoneKillReward', currentRedzoneEvent)
-                        print("^3[Client] Killed player " .. victimServerId .. " in Redzone^7")
                     end
                 end
             end
@@ -280,7 +277,6 @@ AddEventHandler('gameEventTriggered', function(eventName, data)
     end
 end)
 
---- Maintain infinite ammo and monitor player death
 CreateThread(function()
     while true do
         Wait(1000)
@@ -298,7 +294,6 @@ CreateThread(function()
             local ped = PlayerPedId()
             if IsEntityDead(ped) then
                 TriggerServerEvent('peleg-events:redzonePlayerDied', currentRedzoneEvent)
-                print("^3[Client] Player died in Redzone event^7")
             end
         end
     end

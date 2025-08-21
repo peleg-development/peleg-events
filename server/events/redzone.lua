@@ -275,19 +275,21 @@ RegisterNetEvent('peleg-events:redzonePlayerDied', function(eventId)
 end)
 
 RegisterNetEvent('peleg-events:redzonePlayerKilled', function(eventId, victimId)
-    local source = source
-    local killerName = GetPlayerName(source)
-    local victimName = GetPlayerName(victimId)
+    if redzoneEvents[eventId] and redzoneEvents[eventId].alivePlayers[victimId] then
+        local source = source
+        local killerName = GetPlayerName(source)
+        local victimName = GetPlayerName(victimId)
 
-    TriggerClientEvent('peleg-events:addKillFeed', -1, {
-        killer = killerName,
-        victim = victimName,
-        eventType = "Redzone"
-    })
+        TriggerClientEvent('peleg-events:addKillFeed', -1, {
+            killer = killerName,
+            victim = victimName,
+            eventType = "Redzone"
+        })
 
-    handleRedzonePlayerDeath(eventId, victimId)
-    
-    TriggerEvent('peleg-events:addKill', eventId, source, victimId)
+        handleRedzonePlayerDeath(eventId, victimId)
+
+        TriggerEvent('peleg-events:addKill', eventId, source, victimId)
+    end
 end)
 
 RegisterNetEvent('peleg-events:redzoneKillReward', function(eventId)
@@ -337,7 +339,7 @@ RegisterNetEvent('peleg-events:cleanupRedzone', function(eventId)
                         TriggerClientEvent('hospital:client:Revive', participant.id)
                     end
 
-                
+                    TriggerClientEvent('peleg-events:hideKillsCounter', participant.id)
                 end
             end
         end

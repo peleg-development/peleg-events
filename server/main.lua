@@ -310,6 +310,8 @@ function finishEvent(eventId, winnerId)
         return
     end
 
+    Citizen.CreateThread(function()
+        Wait(2500)
     for _, participant in pairs(event.participants) do
         TriggerClientEvent('peleg-events:showScoreboard', participant.id, stats)
         TriggerClientEvent('peleg-events:hideKillsCounter', participant.id)
@@ -326,6 +328,7 @@ function finishEvent(eventId, winnerId)
             TriggerClientEvent('peleg-events:showWinnerUI', participant.id, winnerData)
         end
     end
+end)
 
     if winnerId then
         local success, message = exports['peleg-events']:GiveReward(winnerId, event.rewardType, event.rewardData)
