@@ -267,6 +267,16 @@ local function handleRedzonePlayerDeath(eventId, playerId)
     end
 end
 
+RegisterNetEvent('peleg-events:startRedzone', function(eventId)
+    startRedzoneEvent(eventId)
+end)
+
+RegisterNetEvent('peleg-events:redzonePlayerDied', function(eventId)
+    local source = source
+    handleRedzonePlayerDeath(eventId, source)
+end)
+
+
 --- Revive player after redzone event ends
 ---@param playerId number Server ID of the player to revive
 local function revivePlayerAfterRedzone(playerId)
@@ -287,16 +297,6 @@ local function revivePlayerAfterRedzone(playerId)
     
 end
 
-RegisterNetEvent('peleg-events:startRedzone', function(eventId)
-    startRedzoneEvent(eventId)
-end)
-
-RegisterNetEvent('peleg-events:redzonePlayerDied', function(eventId)
-    local source = source
-    handleRedzonePlayerDeath(eventId, source)
-end)
-
---- Event handler: the source player killed a victim; logs a kill feed entry and eliminates the victim
 RegisterNetEvent('peleg-events:redzonePlayerKilled', function(eventId, victimId)
     local source = source
     local killerName = GetPlayerName(source)
@@ -340,10 +340,9 @@ RegisterNetEvent('peleg-events:cleanupRedzone', function(eventId)
                     SetPlayerRoutingBucket(participant.id, participant.originalBucket or 0)
 
                     FreezeEntityPosition(GetPlayerPed(participant.id), false)
-                    
                     revivePlayerAfterRedzone(participant.id)
                     
-                    TriggerClientEvent('peleg-events:hideKillsCounter', participant.id)
+                    print("^3[Redzone] Restored player " .. participant.id .. " to original state^7")
                 end
             end
         end

@@ -85,7 +85,7 @@ local function createCarSumoPlatform(eventId, center, radius)
     carSumoEvents[eventId].platformObjects = {}
 
     print("Creating large platform at", json.encode(center))
-    local platformFloor = CreateObject(GetHashKey("stt_prop_stunt_target"), center.x, center.y, center.z - 0.5, true, false, false)
+    local platformFloor = CreateObject(GetHashKey("stt_prop_stunt_target"), center.x, center.y, center.z - 1.0, true, false, false)
     FreezeEntityPosition(platformFloor, true)
     SetEntityHeading(platformFloor, 0.0)
 
@@ -219,15 +219,14 @@ local function startCarSumoEvent(eventId)
         end
     end)
 
+    --- Elimination loop: monitors Z height, explodes/ejects, updates kill feed, and detects winner.
     CreateThread(function()
-        Wait(1500)
-        
         while carSumoEvents[eventId] and carSumoEvents[eventId].alivePlayers do
             Wait(1000)
             for playerId, isAlive in pairs(carSumoEvents[eventId].alivePlayers) do
                 if isAlive and GetPlayerPed(playerId) then
                     local playerPos = GetEntityCoords(GetPlayerPed(playerId))
-                    local fallHeight = 1500.0
+                    local fallHeight = 1501.0
                     if playerPos.z < fallHeight then
                         carSumoEvents[eventId].alivePlayers[playerId] = false
                         TriggerClientEvent('peleg-events:explodeCarSumoVehicle', playerId, eventId)
