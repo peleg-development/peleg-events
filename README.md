@@ -2,6 +2,29 @@
 
 A comprehensive FiveM standalone event system with three exciting event types: Car Sumo, Redzone, and Party events. Features a modern React TypeScript UI with Tailwind CSS.
 
+## Preview
+<div align="center">
+
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/41702157-d1cc-48b8-8d9e-2277d72f2d61" width="350"/></td>
+    <td><img src="https://github.com/user-attachments/assets/0c1dcf6a-b613-4e41-9935-abfbaf3f1440" width="350"/></td>
+    <td><img src="https://github.com/user-attachments/assets/b285db21-e5d8-4ac0-9679-c5710bd056ee" width="350"/></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/ded3b781-e833-4e2b-8b79-5f53f6f24e21" width="350"/></td>
+    <td><img src="https://github.com/user-attachments/assets/028dbbdf-ce04-46f3-9d07-60dd2e3a4bcc" width="350"/></td>
+    <td><img src="https://github.com/user-attachments/assets/5f587f42-7f71-4ae2-a68b-bf1aca5f1ceb" width="350"/></td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center">
+      <img src="https://github.com/user-attachments/assets/f0313594-eaf6-4f34-bda4-9d084062a9b5" width="600"/>
+    </td>
+  </tr>
+</table>
+
+</div>
+
 ## Features
 
 ### Event Types
