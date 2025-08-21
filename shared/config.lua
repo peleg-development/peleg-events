@@ -150,4 +150,4 @@ Config.UI = {
 Config.Framework = "auto" -- auto, esx, qbcore, standalone
 
 
-Config.Debug = false
+Config.Debug = true

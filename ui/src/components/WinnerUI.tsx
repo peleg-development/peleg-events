@@ -22,10 +22,12 @@ const WinnerUI: React.FC<WinnerUIProps> = ({ winnerData, onClose }) => {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
+    // Show confetti effect after a short delay
     const timer = setTimeout(() => {
       setShowConfetti(true);
     }, 500);
 
+    // Auto-close after 10 seconds
     const autoClose = setTimeout(() => {
       onClose();
     }, 10000);

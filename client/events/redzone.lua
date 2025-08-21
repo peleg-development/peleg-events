@@ -14,6 +14,11 @@ RegisterNetEvent('peleg-events:spawnRedzonePlayer', function(eventId, spawnPos)
         currentRedzoneEvent = eventId
         SetEntityCoords(PlayerPedId(), spawnPos.x, spawnPos.y, spawnPos.z, false, false, false, true)
         
+        -- Clear all weapons when joining redzone
+        local ped = PlayerPedId()
+        RemoveAllPedWeapons(ped, true)
+        SetCurrentPedWeapon(ped, GetHashKey("WEAPON_UNARMED"), true)
+        
         if redzoneZoneBlip and DoesBlipExist(redzoneZoneBlip) then
             RemoveBlip(redzoneZoneBlip)
         end
@@ -50,7 +55,6 @@ end)
 --- Remove weapon from player when event ends
 ---@param eventId string
 RegisterNetEvent('peleg-events:removeRedzoneWeapon', function(eventId)
-    if currentEventId == eventId or joinedEventId == eventId then
         local ped = PlayerPedId()
         RemoveAllPedWeapons(ped, true)
         SetCurrentPedWeapon(ped, GetHashKey("WEAPON_UNARMED"), true)
@@ -60,7 +64,7 @@ RegisterNetEvent('peleg-events:removeRedzoneWeapon', function(eventId)
         currentRedzoneWeapon = nil
         infiniteAmmo = false
         print("^3[Client] Removed weapons for Redzone event^7")
-    end
+ 
 end)
 
 --- Give full armor to player after kill
@@ -212,6 +216,7 @@ RegisterNetEvent('peleg-events:redzoneEventEnded', function(eventId)
             zoneUpdateThread = nil
         end
         
+        -- Hide kills UI when event ends
         SendNUIMessage({ action = "hideKillsCounter" })
         
         local ped = PlayerPedId()
@@ -222,8 +227,6 @@ RegisterNetEvent('peleg-events:redzoneEventEnded', function(eventId)
         
         SetEntityHealth(ped, 200)
         SetPedArmour(ped, 0)
-        
-        SendNUIMessage({ action = "hideKillsCounter" })
         
         currentRedzoneEvent = nil
         currentRedzoneWeapon = nil
@@ -300,5 +303,4 @@ CreateThread(function()
         end
     end
 end)
-
 

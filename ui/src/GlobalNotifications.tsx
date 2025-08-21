@@ -26,6 +26,7 @@ const GlobalNotifications: React.FC = () => {
 
         setNotifications(prev => [...prev, newNotification]);
 
+        // Auto remove after duration
         setTimeout(() => {
           setNotifications(prev => prev.filter(n => n.id !== id));
         }, newNotification.duration);

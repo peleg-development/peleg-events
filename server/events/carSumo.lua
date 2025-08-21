@@ -166,20 +166,20 @@ local function startCarSumoEvent(eventId)
         TriggerClientEvent('peleg-events:spawnCarSumoVehicle', participant.id, eventId, vehicleModel, spawnPos, heading)
         carSumoEvents[eventId].alivePlayers[participant.id] = true
 
-        SetTimeout(1000, function()
-            if GetPlayerPed(participant.id) then
-                local ped = GetPlayerPed(participant.id)
-                local vehicle = GetVehiclePedIsIn(ped, false)
-                if vehicle and DoesEntityExist(vehicle) then
-                    FreezeEntityPosition(vehicle, true)
-                    TriggerClientEvent('peleg-events:freezeCarSumoVehicle', participant.id, eventId, true)
-                    print("^3[CarSumo] Vehicle frozen for player " .. participant.id .. "^7")
-                else
-                    FreezeEntityPosition(ped, true)
-                    print("^3[CarSumo] Player frozen for player " .. participant.id .. "^7")
-                end
+        
+        if GetPlayerPed(participant.id) then
+            local ped = GetPlayerPed(participant.id)
+            local vehicle = GetVehiclePedIsIn(ped, false)
+            if vehicle and DoesEntityExist(vehicle) then
+                FreezeEntityPosition(vehicle, true)
+                TriggerClientEvent('peleg-events:freezeCarSumoVehicle', participant.id, eventId, true)
+                print("^3[CarSumo] Vehicle frozen for player " .. participant.id .. "^7")
+            else
+                FreezeEntityPosition(ped, true)
+                print("^3[CarSumo] Player frozen for player " .. participant.id .. "^7")
             end
-        end)
+        end
+        
     end
 
     print("^3[CarSumo] Starting countdown for " .. Config.Events.CarSumo.countdownDuration .. " seconds^7")
@@ -222,7 +222,7 @@ local function startCarSumoEvent(eventId)
     --- Elimination loop: monitors Z height, explodes/ejects, updates kill feed, and detects winner.
     CreateThread(function()
         while carSumoEvents[eventId] and carSumoEvents[eventId].alivePlayers do
-            Wait(1000)
+            Wait(1500)
             for playerId, isAlive in pairs(carSumoEvents[eventId].alivePlayers) do
                 if isAlive and GetPlayerPed(playerId) then
                     local playerPos = GetEntityCoords(GetPlayerPed(playerId))
@@ -303,7 +303,6 @@ local function handleCarSumoPlayerDeath(eventId, playerId)
 
     TriggerEvent('peleg-events:playerDied', eventId, playerId)
 
-    print("^3[Server] Adding kill feed: Death killed " .. GetPlayerName(playerId) .. " in CarSumo^7")
     TriggerClientEvent('peleg-events:addKillFeed', -1, {
         killer = "Death",
         victim = GetPlayerName(playerId),
@@ -323,10 +322,6 @@ local function handleCarSumoPlayerDeath(eventId, playerId)
 
     if aliveCount <= 1 then
         local winnerId = lastAlivePlayer
-        print("^2[CarSumo] Event finished! Winner: " .. winnerId .. " (" .. GetPlayerName(winnerId) .. ")^7")
-        print("^2[CarSumo] Calling finishEvent for event: " .. eventId .. " with winner: " .. winnerId .. "^7")
-        print("^2[CarSumo] Event ID: " .. eventId .. "^7")
-        print("^2[CarSumo] Winner ID: " .. winnerId .. "^7")
         finishEvent(eventId, winnerId)
 
         local event = exports['peleg-events']:getActiveEvents()[eventId]

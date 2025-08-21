@@ -341,6 +341,7 @@ function finishEvent(eventId, winnerId)
             SetEntityCoords(GetPlayerPed(participant.id), participant.originalPosition.x, participant.originalPosition.y, participant.originalPosition.z, false, false, false, true)
             SetPlayerRoutingBucket(participant.id, participant.originalBucket or 0)
             FreezeEntityPosition(GetPlayerPed(participant.id), false)
+            TriggerClientEvent('peleg-events:hideKillsCounter', participant.id)
         end
     end
 
@@ -367,13 +368,6 @@ end, false)
 
 RegisterNetEvent('peleg-events:createEvent', function(eventType, maxPlayers, rewardType, rewardData, customSettings)
     local src = source
-    print("^2[Events] Received createEvent request^7")
-    print("^2[Events] eventType: " .. tostring(eventType) .. "^7")
-    print("^2[Events] maxPlayers: " .. tostring(maxPlayers) .. "^7")
-    print("^2[Events] rewardType: " .. tostring(rewardType) .. "^7")
-    print("^2[Events] rewardData: " .. json.encode(rewardData or {}) .. "^7")
-    print("^2[Events] customSettings: " .. json.encode(customSettings or {}) .. "^7")
-
     if not isPlayerAuthorized(src) then
         TriggerClientEvent('peleg-events:notification', src, 'error', 'You are not authorized to create events')
         return
@@ -392,10 +386,6 @@ RegisterNetEvent('peleg-events:createEvent', function(eventType, maxPlayers, rew
         TriggerClientEvent('peleg-events:notification', src, 'error', err or 'Failed to create event')
         return
     end
-    
-    print("^2[Events] Event created successfully with ID: " .. eventId .. "^7")
-    print("^2[Events] Total active events: " .. getTableLength(activeEvents) .. "^7")
-
     TriggerClientEvent('peleg-events:notification', src, 'success', 'Event created successfully!')
     TriggerClientEvent('peleg-events:notification', -1, 'info', GetPlayerName(src) .. ' created a ' .. eventType .. ' event!')
     TriggerClientEvent('peleg-events:eventCreated', src, eventId)
@@ -520,12 +510,9 @@ AddEventHandler('peleg-events:stopEvent', function(eventId)
         TriggerClientEvent('peleg-events:notification', src, 'error', 'Only the host can stop the event')
         return
     end
-    if event.status ~= "active" then
-        TriggerClientEvent('peleg-events:notification', src, 'error', 'Event is not active')
-        return
-    end
     
     if event.type == "Party" then
+        -- Party events can be stopped regardless of status
         TriggerEvent('peleg-events:stopParty', eventId)
         event.status = "finished"
         event.finishedAt = os.time()
@@ -539,6 +526,15 @@ AddEventHandler('peleg-events:stopEvent', function(eventId)
         end
         
         TriggerClientEvent('peleg-events:notification', src, 'success', 'Party event stopped and rewards distributed')
+    else
+        -- For other event types, check if they are active
+        if event.status ~= "active" then
+            TriggerClientEvent('peleg-events:notification', src, 'error', 'Event is not active')
+            return
+        end
+        
+        -- Handle stopping other event types here
+        finishEvent(eventId)
     end
 end)
 

@@ -39,7 +39,7 @@ RegisterNetEvent('peleg-events:spawnCarSumoVehicle', function(eventId, vehicleMo
             Wait(200)
             SetPedIntoVehicle(ped, vehicle, -1)
         end
-
+        FreezeEntityPosition(vehicle, true)
         carSumoVehicles[eventId] = vehicle
         currentCarSumoEvent = eventId
         SetModelAsNoLongerNeeded(vehicleHash)

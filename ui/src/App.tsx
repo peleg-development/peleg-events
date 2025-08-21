@@ -92,7 +92,6 @@ const App: React.FC = () => {
   })
 
   useNuiEvent('playerEliminated', (data: { eventId: string; playerId: number; playerName: string }) => {
-    // Handle player elimination
     console.log(`Player ${data.playerName} eliminated from event ${data.eventId}`)
   })
 

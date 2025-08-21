@@ -18,10 +18,12 @@ body {
   background: transparent;
 }
 
+/* Dark theme styles */
 .dark {
   color-scheme: dark;
 }
 
+/* Custom notification styles */
 .notification-container {
   position: fixed;
   top: 20px;

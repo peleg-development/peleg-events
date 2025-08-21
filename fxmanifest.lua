@@ -15,7 +15,6 @@ client_scripts {
     'client/events/carSumo.lua',
     'client/events/redzone.lua',
     'client/events/party.lua',
-    'client/ui.lua'
 }
 
 server_scripts {

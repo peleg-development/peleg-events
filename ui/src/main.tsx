@@ -40,22 +40,14 @@ const GlobalScoreboard: React.FC = () => {
   const [scoreboardData, setScoreboardData] = useState<{ eventId: string; eventType: string; players: Array<{ id: number; name: string; kills: number; timeAlive: number; rank: number; isWinner?: boolean }>; duration: number } | null>(null);
 
   useNuiEvent('showScoreboard', (data: { eventId: string; eventType: string; players: Array<{ id: number; name: string; kills: number; timeAlive: number; rank: number; isWinner?: boolean }>; duration: number }) => {
-    console.log('GlobalScoreboard received showScoreboard event:', data);
-    console.log('GlobalScoreboard data type:', typeof data);
-    console.log('GlobalScoreboard data keys:', Object.keys(data));
     setScoreboardData(data);
   });
 
   const handleClose = () => {
-    console.log('GlobalScoreboard closing');
     setScoreboardData(null);
   };
 
-  console.log('GlobalScoreboard render - scoreboardData:', scoreboardData);
-
   if (!scoreboardData) return null;
-
-  console.log('GlobalScoreboard rendering with data:', scoreboardData);
 
   return (
     <Scoreboard
@@ -69,12 +61,10 @@ const GlobalKillsCounter: React.FC = () => {
   const [killsData, setKillsData] = useState<{ kills: number; isVisible: boolean }>({ kills: 0, isVisible: false });
 
   useNuiEvent('updateKillsCounter', (data: { kills: number; isVisible: boolean }) => {
-    console.log('GlobalKillsCounter received updateKillsCounter event:', data);
     setKillsData(data);
   });
 
   useNuiEvent('hideKillsCounter', () => {
-    console.log('GlobalKillsCounter hiding');
     setKillsData(prev => ({ ...prev, isVisible: false }));
   });
 
@@ -90,12 +80,10 @@ const GlobalWinnerUI: React.FC = () => {
   const [winnerData, setWinnerData] = useState<{ eventId: string; eventType: string; winnerName: string; winnerId: number; reward: { type: string; data: any }; participants: number } | null>(null);
 
   useNuiEvent('showWinnerUI', (data: { eventId: string; eventType: string; winnerName: string; winnerId: number; reward: { type: string; data: any }; participants: number }) => {
-    console.log('GlobalWinnerUI received showWinnerUI event:', data);
     setWinnerData(data);
   });
 
   const handleClose = () => {
-    console.log('GlobalWinnerUI closing');
     setWinnerData(null);
   };
 
@@ -113,7 +101,6 @@ const GlobalKillFeed: React.FC = () => {
   const [killFeed, setKillFeed] = useState<Array<{ id: string; killer: string; victim: string; eventType: string; timestamp: number }>>([]);
 
   useNuiEvent('addKillFeed', (data: { killer: string; victim: string; eventType: string }) => {
-    console.log('GlobalKillFeed received addKillFeed event:', data);
     const newKill = {
       id: Date.now().toString(),
       killer: data.killer,
@@ -122,15 +109,12 @@ const GlobalKillFeed: React.FC = () => {
       timestamp: Date.now()
     };
     
-    setKillFeed(prev => [...prev.slice(-4), newKill]); // Keep only last 5 kills
+    setKillFeed(prev => [...prev.slice(-4), newKill]); 
     
-    // Auto remove after 5 seconds
     setTimeout(() => {
       setKillFeed(prev => prev.filter(kill => kill.id !== newKill.id));
     }, 5000);
   });
-
-  console.log('GlobalKillFeed render - killFeed length:', killFeed.length);
 
   if (killFeed.length === 0) return null;
 

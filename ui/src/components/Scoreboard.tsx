@@ -28,12 +28,15 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ scoreboardData, onClose }) => {
   const [timeLeft, setTimeLeft] = useState(20);
 
   useEffect(() => {
+    // Set NUI focus
     fetchNui('setNuiFocus', { focus: true, cursor: true });
 
+    // Show confetti effect after a short delay
     const timer = setTimeout(() => {
       setShowConfetti(true);
     }, 500);
 
+    // Countdown timer
     const countdown = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -47,6 +50,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ scoreboardData, onClose }) => {
     return () => {
       clearTimeout(timer);
       clearInterval(countdown);
+      // Remove NUI focus when component unmounts
       fetchNui('setNuiFocus', { focus: false, cursor: false });
     };
   }, [onClose]);
@@ -85,8 +89,10 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ scoreboardData, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      {/* Background overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-75"></div>
       
+      {/* Confetti effect */}
       {showConfetti && (
         <div className="absolute inset-0 pointer-events-none">
           {[...Array(30)].map((_, i) => (

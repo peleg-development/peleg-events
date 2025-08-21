@@ -2,6 +2,19 @@
 --- Coordinates players, zone shrinking, weapon distribution, elimination logic, and cleanup.
 local redzoneEvents = {}
 
+function ToggleInventoryBusy(playerId, setBusy)
+    if not playerId then return end
+   
+    if GetResourceState('ox_inventory') == 'started' then
+        exports.ox_inventory:SetPlayerData(playerId, 'busy', setBusy)
+    end
+   
+    if GetResourceState('qb-inventory') == 'started' or GetResourceState('ps-inventory') == 'started' then
+        TriggerClientEvent('inventory:client:setBusy', playerId, setBusy)
+        TriggerClientEvent('qb-inventory:client:setBusy', playerId, setBusy)
+    end
+end
+
 --- Get a random spawn position from predefined locations for a player
 ---@param eventId string Event identifier
 ---@param usedPositions table Table of already used positions
@@ -77,11 +90,8 @@ end
 --- 4) performs countdown, 5) starts zone shrinking, 6) begins elimination loop
 ---@param eventId string Event identifier
 local function startRedzoneEvent(eventId)
-    print("^2[Redzone] Starting event: " .. eventId .. "^7")
-
     local event = exports['peleg-events']:getActiveEvents()[eventId]
     if not event then
-        print("^1[Redzone] Event not found: " .. eventId .. "^7")
         return
     end
 
@@ -99,8 +109,6 @@ local function startRedzoneEvent(eventId)
         end
         return
     end
-
-    print("^3[Redzone] Event found with " .. #event.participants .. " participants^7")
 
     local zoneBaseSize = event.customSettings and event.customSettings.zoneBaseSize or 200.0
     local zoneChangeSpeed = event.customSettings and event.customSettings.zoneChangeSpeed or 1.0
@@ -121,10 +129,8 @@ local function startRedzoneEvent(eventId)
     }
 
     local eventBucket = 2000 + (tonumber(eventId:match("%d+")) or math.random(1000, 9999))
-    print("^3[Redzone] Using bucket: " .. eventBucket .. " for event: " .. eventId .. "^7")
 
     for _, participant in pairs(event.participants) do
-        print("^3[Redzone] Moving player " .. participant.id .. " to bucket " .. eventBucket .. "^7")
         SetPlayerRoutingBucket(participant.id, eventBucket)
         Wait(100)
     end
@@ -132,9 +138,9 @@ local function startRedzoneEvent(eventId)
     Wait(1000)
 
     for _, participant in pairs(event.participants) do
+        ToggleInventoryBusy(participant.id, true)
         local spawnPos = getRandomSpawnPosition(eventId, redzoneEvents[eventId].usedSpawnPositions, redzoneEvents[eventId].zoneCenter, redzoneEvents[eventId].zoneRadius)
         table.insert(redzoneEvents[eventId].usedSpawnPositions, spawnPos)
-        print("^3[Redzone] Setting up player " .. participant.id .. " at " .. json.encode(spawnPos) .. "^7")
         
         TriggerClientEvent('peleg-events:spawnRedzonePlayer', participant.id, eventId, spawnPos)
         redzoneEvents[eventId].alivePlayers[participant.id] = true
@@ -146,8 +152,7 @@ local function startRedzoneEvent(eventId)
             end
         end)
     end
-
-    print("^3[Redzone] Starting countdown for " .. Config.Events.Redzone.countdownDuration .. " seconds^7")
+    
     for _, participant in pairs(event.participants) do
         TriggerClientEvent('peleg-events:redzoneCountdown', participant.id, eventId, Config.Events.Redzone.countdownDuration)
     end
@@ -156,8 +161,6 @@ local function startRedzoneEvent(eventId)
         if not redzoneEvents[eventId] then
             return
         end
-
-        print("^2[Redzone] Countdown finished, starting event^7")
 
         for _, participant in pairs(event.participants) do
             if GetPlayerPed(participant.id) then
@@ -237,7 +240,6 @@ local function handleRedzonePlayerDeath(eventId, playerId)
 
     TriggerEvent('peleg-events:playerDied', eventId, playerId)
 
-    print("^3[Server] Adding kill feed: Zone killed " .. GetPlayerName(playerId) .. " in Redzone^7")
     TriggerClientEvent('peleg-events:addKillFeed', -1, {
         killer = "Zone",
         victim = GetPlayerName(playerId),
@@ -257,12 +259,8 @@ local function handleRedzonePlayerDeath(eventId, playerId)
 
     if aliveCount <= 1 then
         local winnerId = lastAlivePlayer
-        print("^2[Redzone] Event finished! Winner: " .. winnerId .. " (" .. GetPlayerName(winnerId) .. ")^7")
-        print("^2[Redzone] Calling finishEvent for event: " .. eventId .. " with winner: " .. winnerId .. "^7")
-        
-        TriggerEvent('peleg-events:cleanupRedzone', eventId)
         finishEvent(eventId, winnerId)
-
+        
         redzoneEvents[eventId] = nil
     end
 end
@@ -276,33 +274,10 @@ RegisterNetEvent('peleg-events:redzonePlayerDied', function(eventId)
     handleRedzonePlayerDeath(eventId, source)
 end)
 
-
---- Revive player after redzone event ends
----@param playerId number Server ID of the player to revive
-local function revivePlayerAfterRedzone(playerId)
-    if not GetPlayerPed(playerId) then
-        return
-    end
-    
-    local ped = GetPlayerPed(playerId)
-    TriggerServerEvent('txsv:req:healMyself')
-
-    NetworkResurrectLocalPlayer(GetEntityCoords(ped), GetEntityHeading(ped), true, false)
-    SetEntityHealth(ped, 200)
-    SetPedArmour(ped, 0)
-    ClearPedBloodDamage(ped)
-    ClearPedTasksImmediately(ped)
-    
-    FreezeEntityPosition(ped, false)
-    
-end
-
 RegisterNetEvent('peleg-events:redzonePlayerKilled', function(eventId, victimId)
     local source = source
     local killerName = GetPlayerName(source)
     local victimName = GetPlayerName(victimId)
-
-    print("^3[Server] Player " .. killerName .. " killed " .. victimName .. " in Redzone^7")
 
     TriggerClientEvent('peleg-events:addKillFeed', -1, {
         killer = killerName,
@@ -319,30 +294,50 @@ RegisterNetEvent('peleg-events:redzoneKillReward', function(eventId)
     local source = source
     if redzoneEvents[eventId] and redzoneEvents[eventId].alivePlayers[source] then
         TriggerClientEvent('peleg-events:giveFullArmor', source, eventId)
-        print("^3[Server] Gave full armor to player " .. GetPlayerName(source) .. " for kill^7")
     end
 end)
 
 RegisterNetEvent('peleg-events:cleanupRedzone', function(eventId)
     if redzoneEvents[eventId] then
-        print("^3[Redzone] Cleaning up event: " .. eventId .. "^7")
-
         local event = exports['peleg-events']:getActiveEvents()[eventId]
+
         if event and event.participants then
+            local framework = nil
+            if GetResourceState('qb-core') == 'started' or GetResourceState('qbx_core') == 'started' then
+                framework = 'qb'
+            elseif GetResourceState('es_extended') == 'started' then
+                framework = 'esx'
+            end
+            
+            Wait(4550)
             for _, participant in pairs(event.participants) do
                 if GetPlayerPed(participant.id) then
+                    Wait(100)
+                    TriggerClientEvent('peleg-events:removeRedzoneWeapon', participant.id, eventId)
+                    ToggleInventoryBusy(participant.id, false)
+
                     SetEntityCoords(GetPlayerPed(participant.id),
                         participant.originalPosition.x,
                         participant.originalPosition.y,
                         participant.originalPosition.z,
                         false, false, false, true)
-
-                    SetPlayerRoutingBucket(participant.id, participant.originalBucket or 0)
-
+                    SetPlayerRoutingBucket(participant.id, 0)
                     FreezeEntityPosition(GetPlayerPed(participant.id), false)
-                    revivePlayerAfterRedzone(participant.id)
-                    
-                    print("^3[Redzone] Restored player " .. participant.id .. " to original state^7")
+                    if framework == 'qb' then
+                        TriggerClientEvent('hospital:client:Revive', participant.id)
+                        TriggerClientEvent('qb-ambulancejob:revive', participant.id)
+                        TriggerClientEvent('qb-medical:client:revive', participant.id)
+                        TriggerClientEvent('hud:client:UpdateNeeds', participant.id, false, false, false, false)
+                    elseif framework == 'esx' then
+                        TriggerClientEvent('esx_ambulancejob:revive', participant.id)
+                        TriggerClientEvent('ambulancejob:revive', participant.id)
+                    else
+                        TriggerClientEvent("txcl:heal", participant.id)
+                        TriggerClientEvent('esx_ambulancejob:revive', participant.id)
+                        TriggerClientEvent('hospital:client:Revive', participant.id)
+                    end
+
+                
                 end
             end
         end
