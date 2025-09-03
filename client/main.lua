@@ -7,14 +7,12 @@ local eventJoinPanelVisible = false
 local currentJoinEventId = nil
 joinedEventId = nil
 
---- Show a notification in the NUI
 --- @param type string Notification type: success|error|warning|info
 --- @param message string Notification message
 local function showNotification(type, message)
     SendNUIMessage({ action = "showGlobalNotification", type = type, message = message })
 end
 
---- Toggle the main Events UI
 --- @param enabled boolean Whether to show the UI
 local function toggleUI(enabled)
     isUIOpen = enabled
@@ -22,20 +20,17 @@ local function toggleUI(enabled)
     SendNUIMessage({ action = "setVisible", visible = enabled })
 end
 
---- Open the UI and refresh events
 RegisterNetEvent('peleg-events:openUI', function()
     toggleUI(true)
     TriggerServerEvent('peleg-events:getActiveEvents')
 end)
 
---- Proxy for small toast notifications
 --- @param type string
 --- @param message string
 RegisterNetEvent('peleg-events:notification', function(type, message)
     showNotification(type, message)
 end)
 
---- Show per-event join panel
 --- @param data {event: table, deadline: number}
 RegisterNetEvent('peleg-events:showEventJoinPanel', function(data)
     eventJoinPanelVisible = true
@@ -48,14 +43,12 @@ RegisterNetEvent('peleg-events:showEventJoinPanel', function(data)
     })
 end)
 
---- Hide per-event join panel
 RegisterNetEvent('peleg-events:hideEventJoinPanel', function()
     eventJoinPanelVisible = false
     currentJoinEventId = nil
     SendNUIMessage({ action = "hideEventJoinPanel" })
 end)
 
---- Show global join panel
 --- @param data {event: table, deadline: number}
 RegisterNetEvent('peleg-events:showGlobalEventJoinPanel', function(data)
     globalJoinPanelVisible = true
@@ -68,14 +61,12 @@ RegisterNetEvent('peleg-events:showGlobalEventJoinPanel', function(data)
     })
 end)
 
---- Hide global join panel
 RegisterNetEvent('peleg-events:hideGlobalEventJoinPanel', function()
     globalJoinPanelVisible = false
     currentJoinEventId = nil
     SendNUIMessage({ action = "hideGlobalEventJoinPanel" })
 end)
 
---- Give vehicle keys based on detected framework
 --- @param vehicle number Vehicle entity id
 RegisterNetEvent('peleg-events:giveVehicleKeys', function(vehicle)
     local ESX = Framework.Detect("esx")
@@ -95,7 +86,6 @@ RegisterNetEvent('peleg-events:giveVehicleKeys', function(vehicle)
     SetVehicleNeedsToBeHotwired(vehicle, false)
 end)
 
---- Receive active events list from server
 --- @param events table
 RegisterNetEvent('peleg-events:activeEventsData', function(events)
     SendNUIMessage({
@@ -105,14 +95,12 @@ RegisterNetEvent('peleg-events:activeEventsData', function(events)
     })
 end)
 
---- Client acknowledgment that event was created
 --- @param eventId string
 RegisterNetEvent('peleg-events:eventCreated', function(eventId)
     currentEventId = eventId
     SendNUIMessage({ action = "eventCreated", eventId = eventId })
 end)
 
---- A player joined the event; update UI state
 --- @param eventId string
 --- @param playerId number
 --- @param playerName string
@@ -126,7 +114,6 @@ RegisterNetEvent('peleg-events:playerJoined', function(eventId, playerId, player
             SendNUIMessage({ action = "updateEventJoinPanel", hasJoined = true })
         end
         
-        -- Hide any join panels when player joins an event
         if globalJoinPanelVisible or eventJoinPanelVisible then
             globalJoinPanelVisible = false
             eventJoinPanelVisible = false
@@ -139,7 +126,6 @@ RegisterNetEvent('peleg-events:playerJoined', function(eventId, playerId, player
     SendNUIMessage({ action = "playerJoined", eventId = eventId, playerId = playerId, playerName = playerName })
 end)
 
---- A player left the event; update UI state
 --- @param eventId string
 --- @param playerId number
 RegisterNetEvent('peleg-events:playerLeft', function(eventId, playerId)
@@ -158,7 +144,6 @@ RegisterNetEvent('peleg-events:playerLeft', function(eventId, playerId)
     SendNUIMessage({ action = "playerLeft", eventId = eventId, playerId = playerId })
 end)
 
---- A player was eliminated; push to feed
 --- @param eventId string
 --- @param playerId number
 --- @param playerName string
@@ -204,7 +189,6 @@ RegisterNetEvent('peleg-events:redzoneStarted', function(eventId)
 end)
 
 
---- Show scoreboard and reset local event state
 --- @param scoreboardData {eventId:string, eventType:string, players:table, duration:number}
 RegisterNetEvent('peleg-events:showScoreboard', function(scoreboardData)
     isInEvent = false
@@ -219,73 +203,61 @@ RegisterNetEvent('peleg-events:showScoreboard', function(scoreboardData)
     })
 end)
 
---- Update kills counter UI
 --- @param killsData {kills:number, isVisible:boolean}
 RegisterNetEvent('peleg-events:updateKillsCounter', function(killsData)
     SendNUIMessage({ action = "updateKillsCounter", kills = killsData.kills, isVisible = killsData.isVisible })
 end)
 
---- Hide kills counter UI
 RegisterNetEvent('peleg-events:hideKillsCounter', function()
     SendNUIMessage({ action = "hideKillsCounter" })
 end)
 
---- Add entry to kill feed UI
 --- @param killData {killer:string, victim:string, eventType:string}
 RegisterNetEvent('peleg-events:addKillFeed', function(killData)
     SendNUIMessage({ action = "addKillFeed", killer = killData.killer, victim = killData.victim, eventType = killData.eventType })
 end)
 
---- NUI: close UI
 RegisterNUICallback('closeUI', function(_, cb)
     toggleUI(false)
     cb('ok')
 end)
 
---- NUI: create event
 RegisterNUICallback('createEvent', function(data, cb)
     TriggerServerEvent('peleg-events:createEvent', data.eventType, data.maxPlayers, data.rewardType, data.rewardData, data.customSettings)
     cb('ok')
 end)
 
---- NUI: join event
 RegisterNUICallback('joinEvent', function(data, cb)
     TriggerServerEvent('peleg-events:joinEvent', data.eventId)
     cb('ok')
 end)
 
---- NUI: leave event
 RegisterNUICallback('leaveEvent', function(data, cb)
     TriggerServerEvent('peleg-events:leaveEvent', data.eventId)
     cb('ok')
 end)
 
---- NUI: start event (host)
 RegisterNUICallback('startEvent', function(data, cb)
     TriggerServerEvent('peleg-events:startEvent', data.eventId)
     cb('ok')
 end)
 
---- NUI: stop event (host)
 RegisterNUICallback('stopEvent', function(data, cb)
     TriggerServerEvent('peleg-events:stopEvent', data.eventId)
     cb('ok')
 end)
 
---- NUI: refresh active events list
 RegisterNUICallback('refreshEvents', function(_, cb)
     TriggerServerEvent('peleg-events:getActiveEvents')
     cb('ok')
 end)
 
---- NUI: set focus
 --- @param data {focus:boolean, cursor:boolean}
 RegisterNUICallback('setNuiFocus', function(data, cb)
     SetNuiFocus(data.focus, data.cursor)
     cb('ok')
 end)
 
---- NUI: get current position
 RegisterNUICallback('getCurrentPosition', function(_, cb)
     local ped = PlayerPedId()
     local coords = GetEntityCoords(ped)
@@ -317,7 +289,6 @@ RegisterNetEvent('peleg-events:partyStarted', function(eventId)
     end
 end)
 
---- Background thread: apply infinite ammo when enabled
 CreateThread(function()
     while true do
         Wait(0)

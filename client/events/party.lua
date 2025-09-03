@@ -1,6 +1,5 @@
 local currentPartyEvent = nil
 
---- Handle Party start
 ---@param eventId string
 RegisterNetEvent('peleg-events:partyStarted', function(eventId)
     if currentEventId == eventId or joinedEventId == eventId then
@@ -21,7 +20,6 @@ RegisterNetEvent('peleg-events:partyStarted', function(eventId)
     end
 end)
 
---- Cleanup Party when event ends
 ---@param eventId string
 RegisterNetEvent('peleg-events:partyEventEnded', function(eventId)
     if currentEventId == eventId or joinedEventId == eventId then

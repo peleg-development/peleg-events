@@ -6,7 +6,6 @@ local currentRedzoneWeapon = nil
 local infiniteAmmo = false
 local zoneUpdateThread = nil
 
---- Spawn player in Redzone event
 ---@param eventId string
 ---@param spawnPos vector3
 RegisterNetEvent('peleg-events:spawnRedzonePlayer', function(eventId, spawnPos)
@@ -14,7 +13,6 @@ RegisterNetEvent('peleg-events:spawnRedzonePlayer', function(eventId, spawnPos)
         currentRedzoneEvent = eventId
         SetEntityCoords(PlayerPedId(), spawnPos.x, spawnPos.y, spawnPos.z, false, false, false, true)
         
-        -- Clear all weapons when joining redzone
         local ped = PlayerPedId()
         RemoveAllPedWeapons(ped, true)
         SetCurrentPedWeapon(ped, GetHashKey("WEAPON_UNARMED"), true)
@@ -30,11 +28,9 @@ RegisterNetEvent('peleg-events:spawnRedzonePlayer', function(eventId, spawnPos)
         SetBlipDisplay(redzoneZoneBlip, 4)
         SetBlipAsShortRange(redzoneZoneBlip, false)
         
-        print("^3[Client] Spawned at " .. json.encode(spawnPos) .. " for Redzone event^7")
     end
 end)
 
---- Give weapon to player for Redzone event
 ---@param eventId string
 ---@param weapon string
 RegisterNetEvent('peleg-events:giveRedzoneWeapon', function(eventId, weapon)
@@ -48,11 +44,9 @@ RegisterNetEvent('peleg-events:giveRedzoneWeapon', function(eventId, weapon)
         SetPedInfiniteAmmoClip(ped, true)
         
         infiniteAmmo = true
-        print("^3[Client] Given weapon " .. weapon .. " for Redzone event^7")
     end
 end)
 
---- Remove weapon from player when event ends
 ---@param eventId string
 RegisterNetEvent('peleg-events:removeRedzoneWeapon', function(eventId)
         local ped = PlayerPedId()
@@ -63,21 +57,16 @@ RegisterNetEvent('peleg-events:removeRedzoneWeapon', function(eventId)
         
         currentRedzoneWeapon = nil
         infiniteAmmo = false
-        print("^3[Client] Removed weapons for Redzone event^7")
- 
 end)
 
---- Give full armor to player after kill
 ---@param eventId string
 RegisterNetEvent('peleg-events:giveFullArmor', function(eventId)
     if currentEventId == eventId or joinedEventId == eventId then
         local ped = PlayerPedId()
         SetPedArmour(ped, 100)
-        print("^3[Client] Given full armor for kill^7")
     end
 end)
 
---- Start smooth zone shrinking
 ---@param eventId string
 ---@param center vector3
 ---@param initialRadius number
@@ -125,24 +114,23 @@ RegisterNetEvent('peleg-events:startRedzoneShrinking', function(eventId, center,
                 SetBlipAsShortRange(redzoneZoneBlip, false)
                 
                 DrawMarker(
-                    28, -- Sphere marker type
-                    center.x, center.y, center.z, -- Position
-                    0.0, 0.0, 0.0, -- Direction
-                    0.0, 0.0, 0.0, -- Rotation
-                    redzoneZoneRadius, redzoneZoneRadius, redzoneZoneRadius, -- Scale (same as blip radius)
-                    255, 0, 0, 100, -- Red color with alpha
-                    false, -- Bob up and down
-                    false, -- Face camera
-                    2, -- p19
-                    false, -- Rotate
-                    nil, -- Texture dictionary
-                    nil, -- Texture name
-                    false -- Draw on entities
+                    28,
+                    center.x, center.y, center.z, 
+                    0.0, 0.0, 0.0, 
+                    0.0, 0.0, 0.0,
+                    redzoneZoneRadius, redzoneZoneRadius, redzoneZoneRadius,
+                    255, 0, 0, 100,
+                    false,
+                    false,
+                    2,
+                    false,
+                    nil,
+                    nil,
+                    false
                 )
             end
         end)
         
-        print("^3[Client] Started zone shrinking: center=" .. json.encode(center) .. ", radius=" .. initialRadius .. "^7")
     end
 end)
 
@@ -167,7 +155,6 @@ RegisterNetEvent('peleg-events:damageRedzonePlayer', function(eventId, damage)
     end
 end)
 
---- Handle Redzone start
 ---@param eventId string
 RegisterNetEvent('peleg-events:redzoneStarted', function(eventId)
     if currentEventId == eventId or joinedEventId == eventId then
@@ -187,15 +174,12 @@ RegisterNetEvent('peleg-events:redzoneStarted', function(eventId)
     end
 end)
 
---- Restore player health and armor
 RegisterNetEvent('peleg-events:restorePlayerHealth', function()
     local ped = PlayerPedId()
     SetEntityHealth(ped, 200)
     SetPedArmour(ped, 0)
-    print("^3[Client] Player health restored^7")
 end)
 
---- Cleanup Redzone when event ends
 ---@param eventId string
 RegisterNetEvent('peleg-events:redzoneEventEnded', function(eventId)
     if currentEventId == eventId or joinedEventId == eventId then
@@ -216,7 +200,6 @@ RegisterNetEvent('peleg-events:redzoneEventEnded', function(eventId)
             zoneUpdateThread = nil
         end
         
-        -- Hide kills UI when event ends
         SendNUIMessage({ action = "hideKillsCounter" })
         
         local ped = PlayerPedId()
@@ -244,7 +227,6 @@ RegisterNetEvent('peleg-events:redzoneEventEnded', function(eventId)
     end
 end)
 
---- Track kills for Redzone damage events
 local killTracker = {}
 
 AddEventHandler('gameEventTriggered', function(eventName, data)
@@ -272,7 +254,6 @@ AddEventHandler('gameEventTriggered', function(eventName, data)
                        
                         if not killTracker[key] or (now - killTracker[key]) > 1000 then
                             killTracker[key] = now
-                            print("^3[Client] Redzone kill detected: " .. victimServerId .. " by player^7")
                             TriggerServerEvent('peleg-events:redzonePlayerKilled', currentRedzoneEvent, victimServerId)
                             TriggerServerEvent('peleg-events:redzoneKillReward', currentRedzoneEvent)
                         end

@@ -1,7 +1,5 @@
 local carSumoEvents = {}
 
---- Resolve the spawn position and heading for a specific participant in a Car Sumo event.
---- Player indices are mapped round-robin across a fixed ring of spawn points.
 ---@param eventId string Event identifier
 ---@param playerId number Server ID of the player
 ---@return vector3 pos Position for the player spawn
@@ -10,7 +8,6 @@ local function getCarSumoSpawnPosition(eventId, playerId)
     local event = carSumoEvents[eventId]
     if not event then return Config.Events.CarSumo.spawnLocation, 0.0 end
 
-    --- Ring spawn positions (vector3 + heading) encircling the arena center.
     local spawnPositions = {
         {pos = vector3(-11.5120, 22.0073, 1504.4935), heading = 209.9631},
         {pos = vector3(-4.4280, 23.4034, 1504.4939), heading = 190.0574},
@@ -49,13 +46,10 @@ local function getCarSumoSpawnPosition(eventId, playerId)
     local spawnIndex = ((playerIndex - 1) % #spawnPositions) + 1
     local spawnData = spawnPositions[spawnIndex]
 
-    print("^3[CarSumo] Player " .. playerId .. " gets spawn position " .. spawnIndex .. " at " .. json.encode(spawnData.pos) .. "^7")
 
     return spawnData.pos, spawnData.heading
 end
 
---- Select a random vehicle model for the player based on event custom settings or defaults.
---- Falls back to "adder" if no list is provided.
 ---@param eventId string Event identifier
 ---@return string modelName GTA vehicle model name
 local function getRandomVehicle(eventId)
@@ -68,8 +62,6 @@ local function getRandomVehicle(eventId)
     return vehicles[randomIndex]
 end
 
---- Create a single large platform object for the Car Sumo arena if not present.
---- Stores created entities in carSumoEvents[eventId].platformObjects for later cleanup.
 ---@param eventId string Event identifier
 ---@param center vector3 Arena center position
 ---@param radius number Arena radius (kept for future tiling logic)
@@ -84,7 +76,6 @@ local function createCarSumoPlatform(eventId, center, radius)
 
     carSumoEvents[eventId].platformObjects = {}
 
-    print("Creating large platform at", json.encode(center))
     local platformFloor = CreateObject(GetHashKey("stt_prop_stunt_target"), center.x, center.y, center.z - 1.0, true, false, false)
     FreezeEntityPosition(platformFloor, true)
     SetEntityHeading(platformFloor, 0.0)
@@ -92,7 +83,6 @@ local function createCarSumoPlatform(eventId, center, radius)
     table.insert(carSumoEvents[eventId].platformObjects, platformFloor)
 end
 
---- Remove and delete all platform objects for the specified Car Sumo event.
 ---@param eventId string Event identifier
 local function removeCarSumoPlatform(eventId)
     if carSumoEvents[eventId] and carSumoEvents[eventId].platformObjects then
@@ -105,22 +95,15 @@ local function removeCarSumoPlatform(eventId)
     end
 end
 
---- Start a Car Sumo match:
---- 1) Validates participants, 2) creates/assigns routing bucket, 3) builds platform,
---- 4) spawns vehicles at ring positions, 5) performs countdown, 6) unfreezes to start,
---- 7) begins elimination loop until one winner remains, then calls finishEvent.
 ---@param eventId string Event identifier
 local function startCarSumoEvent(eventId)
-    print("^2[CarSumo] Starting event: " .. eventId .. "^7")
 
     local event = exports['peleg-events']:getActiveEvents()[eventId]
     if not event then
-        print("^1[CarSumo] Event not found: " .. eventId .. "^7")
         return
     end
 
     if #event.participants < 2 then
-        print("^1[CarSumo] Not enough players to start event (need at least 2)^7")
         for _, participant in pairs(event.participants) do
             if GetPlayerPed(participant.id) then
                 SetEntityCoords(GetPlayerPed(participant.id),
@@ -134,7 +117,6 @@ local function startCarSumoEvent(eventId)
         return
     end
 
-    print("^3[CarSumo] Event found with " .. #event.participants .. " participants^7")
 
     carSumoEvents[eventId] = {
         participants = event.participants,
@@ -144,10 +126,8 @@ local function startCarSumoEvent(eventId)
     }
 
     local eventBucket = 1000 + (tonumber(eventId:match("%d+")) or math.random(1000, 9999))
-    print("^3[CarSumo] Using bucket: " .. eventBucket .. " for event: " .. eventId .. "^7")
 
     for _, participant in pairs(event.participants) do
-        print("^3[CarSumo] Moving player " .. participant.id .. " to bucket " .. eventBucket .. "^7")
         SetPlayerRoutingBucket(participant.id, eventBucket)
         Wait(100)
     end
@@ -160,9 +140,7 @@ local function startCarSumoEvent(eventId)
 
     for _, participant in pairs(event.participants) do
         local spawnPos, heading = getCarSumoSpawnPosition(eventId, participant.id)
-        print("^3[CarSumo] Setting up player " .. participant.id .. " at " .. json.encode(spawnPos) .. " heading " .. heading .. "^7")
         local vehicleModel = getRandomVehicle(eventId)
-        print("^3[CarSumo] Spawning vehicle " .. vehicleModel .. " for player " .. participant.id .. "^7")
         TriggerClientEvent('peleg-events:spawnCarSumoVehicle', participant.id, eventId, vehicleModel, spawnPos, heading)
         carSumoEvents[eventId].alivePlayers[participant.id] = true
 
@@ -173,16 +151,13 @@ local function startCarSumoEvent(eventId)
             if vehicle and DoesEntityExist(vehicle) then
                 FreezeEntityPosition(vehicle, true)
                 TriggerClientEvent('peleg-events:freezeCarSumoVehicle', participant.id, eventId, true)
-                print("^3[CarSumo] Vehicle frozen for player " .. participant.id .. "^7")
             else
                 FreezeEntityPosition(ped, true)
-                print("^3[CarSumo] Player frozen for player " .. participant.id .. "^7")
             end
         end
         
     end
 
-    print("^3[CarSumo] Starting countdown for " .. Config.Events.CarSumo.countdownDuration .. " seconds^7")
     for _, participant in pairs(event.participants) do
         TriggerClientEvent('peleg-events:carSumoCountdown', participant.id, eventId, Config.Events.CarSumo.countdownDuration)
     end
@@ -192,7 +167,6 @@ local function startCarSumoEvent(eventId)
             return
         end
 
-        print("^2[CarSumo] Countdown finished, unfreezing players^7")
 
         for _, participant in pairs(event.participants) do
             if GetPlayerPed(participant.id) then
@@ -201,10 +175,8 @@ local function startCarSumoEvent(eventId)
                 if vehicle and DoesEntityExist(vehicle) then
                     FreezeEntityPosition(vehicle, false)
                     TriggerClientEvent('peleg-events:freezeCarSumoVehicle', participant.id, eventId, false)
-                    print("^2[CarSumo] Vehicle unfrozen for player " .. participant.id .. "^7")
                 else
                     FreezeEntityPosition(ped, false)
-                    print("^2[CarSumo] Player unfrozen for player " .. participant.id .. "^7")
                 end
             end
         end
@@ -219,7 +191,6 @@ local function startCarSumoEvent(eventId)
         end
     end)
 
-    --- Elimination loop: monitors Z height, explodes/ejects, updates kill feed, and detects winner.
     CreateThread(function()
         while carSumoEvents[eventId] and carSumoEvents[eventId].alivePlayers do
             Wait(1500)
@@ -280,7 +251,6 @@ local function startCarSumoEvent(eventId)
     end)
 end
 
---- Eliminate a player in the Car Sumo event, switch to spectator, emit feeds, and finalize if last player remains.
 ---@param eventId string Event identifier
 ---@param playerId number Server ID of the player being eliminated
 local function handleCarSumoPlayerDeath(eventId, playerId)
@@ -348,8 +318,6 @@ RegisterNetEvent('peleg-events:carSumoPlayerPushed', function(eventId, victimId)
     local source = source
     local killerName = GetPlayerName(source)
     local victimName = GetPlayerName(victimId)
-
-    print("^3[Server] Player " .. killerName .. " pushed " .. victimName .. " off the platform^7")
 
     TriggerClientEvent('peleg-events:addKillFeed', -1, {
         killer = killerName,

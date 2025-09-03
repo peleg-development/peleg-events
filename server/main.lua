@@ -55,7 +55,6 @@ end
 --- @param killerId number
 --- @param victimId number
 local function addKill(eventId, killerId, victimId)
-    print("^3[Main] addKill called: eventId=" .. tostring(eventId) .. ", killerId=" .. tostring(killerId) .. " (type: " .. type(killerId) .. "), victimId=" .. tostring(victimId) .. "^7")
     
     if not eventKills[eventId] then
         eventKills[eventId] = {}
@@ -64,8 +63,6 @@ local function addKill(eventId, killerId, victimId)
         eventKills[eventId][killerId] = 0
     end
     eventKills[eventId][killerId] = eventKills[eventId][killerId] + 1
-    print("^3[Main] Updated kills for event " .. tostring(eventId) .. ": " .. json.encode(eventKills[eventId]) .. "^7")
-    print("^3[Main] Killer " .. tostring(killerId) .. " now has " .. tostring(eventKills[eventId][killerId]) .. " kills^7")
     TriggerClientEvent('peleg-events:updateKillsCounter', killerId, { kills = eventKills[eventId][killerId], isVisible = true })
 end
 
@@ -73,10 +70,8 @@ end
 --- @param eventId string
 --- @return table|nil
 local function getEventStats(eventId)
-    print("^3[Main] getEventStats called for event: " .. tostring(eventId) .. "^7")
     local event = getActiveEvent(eventId)
     if not event then 
-        print("^1[Main] Event not found in getEventStats^7")
         return nil 
     end
 
@@ -86,20 +81,11 @@ local function getEventStats(eventId)
     stats.duration = currentTime - startTime
 
     local kills = eventKills[eventId] or {}
-    print("^3[Main] Kills data for event " .. eventId .. ": " .. json.encode(kills) .. "^7")
-    print("^3[Main] Event participants: " .. #event.participants .. "^7")
-    print("^3[Main] Kills data type: " .. type(kills) .. "^7")
-    print("^3[Main] Kills keys: " .. json.encode({}) .. "^7")
-    for k, v in pairs(kills) do
-        print("^3[Main] Kill key: " .. tostring(k) .. " (type: " .. type(k) .. "), value: " .. tostring(v) .. "^7")
-    end
     
     for _, participant in pairs(event.participants) do
         local playerKills = kills[participant.id] or 0
         local timeAlive = participant.deathTime and (participant.deathTime - startTime) or stats.duration
         local playerName = GetPlayerName(participant.id) or "Unknown Player"
-        print("^3[Main] Player " .. participant.id .. " (" .. playerName .. "): " .. playerKills .. " kills, deathTime=" .. tostring(participant.deathTime) .. "^7")
-        print("^3[Main] Looking for kills[" .. tostring(participant.id) .. "] (type: " .. type(participant.id) .. ")^7")
         table.insert(stats.players, {
             id = participant.id,
             name = playerName,
@@ -202,36 +188,6 @@ local function removePlayerFromEvent(playerId, eventId)
     end
 end
 
---- Create an event (by id)
---- @param eventId string
---- @param eventType string
---- @param hostId number
---- @param maxPlayers number
---- @param rewardType string
---- @param rewardData table
---- @param customSettings table|nil
---- @return table
-local function createEventById(eventId, eventType, hostId, maxPlayers, rewardType, rewardData, customSettings)
-    local hostName = GetPlayerName(hostId)
-    local eventData = {
-        id = eventId,
-        type = eventType,
-        hostId = hostId,
-        hostName = hostName,
-        maxPlayers = maxPlayers,
-        participants = {},
-        status = "waiting",
-        rewardType = rewardType,
-        rewardData = rewardData,
-        config = customSettings or {},
-        createdAt = os.time()
-    }
-    setActiveEvent(eventId, eventData)
-    eventKills[eventId] = {}
-    print("^2[Server] Event created: " .. eventId .. " by " .. hostName .. "^7")
-    return eventData
-end
-
 --- Start an event
 --- @param eventId string
 local function startEvent(eventId)
@@ -257,8 +213,6 @@ local function startEvent(eventId)
     elseif event.type == "Party" then
         TriggerEvent('peleg-events:startParty', eventId)
     end
-
-    print("^2[Server] Event started: " .. eventId .. "^7")
 end
 
 --- Create an event (auto id)
@@ -310,14 +264,11 @@ local function createEvent(eventType, hostId, maxPlayers, rewardType, rewardData
     return eventId
 end
 
---- Finish an event and distribute rewards
 --- @param eventId string
 --- @param winnerId number|nil
 function finishEvent(eventId, winnerId)
-    print("^3[Main] finishEvent called: eventId=" .. tostring(eventId) .. ", winnerId=" .. tostring(winnerId) .. "^7")
     local event = getActiveEvent(eventId)
     if not event then
-        print("^1[Main] Event not found in finishEvent^7")
         return
     end
 
@@ -327,10 +278,8 @@ function finishEvent(eventId, winnerId)
 
     local stats = getEventStats(eventId)
     if not stats then
-        print("^1[Main] Failed to get event stats^7")
         return
     end
-    print("^3[Main] Event stats generated successfully^7")
 
     Citizen.CreateThread(function()
         Wait(2500)
@@ -400,14 +349,6 @@ RegisterNetEvent('peleg-events:createEvent', function(eventType, maxPlayers, rew
         return
     end
 
-    -- Allow multiple events per host
-    -- for _, event in pairs(activeEvents) do
-    --     if event.hostId == src and event.status == "waiting" then
-    --         TriggerClientEvent('peleg-events:notification', src, 'error', 'You already have an active event')
-    --         return
-    --     end
-    -- end
-
     local eventId, err = createEvent(eventType, src, maxPlayers, rewardType, rewardData, customSettings)
     if not eventId then
         TriggerClientEvent('peleg-events:notification', src, 'error', err or 'Failed to create event')
@@ -419,7 +360,6 @@ RegisterNetEvent('peleg-events:createEvent', function(eventType, maxPlayers, rew
 
     local eventData = getActiveEvent(eventId)
     if eventData then
-        -- Send join panel to all players except those already in an event
         for _, playerId in pairs(GetPlayers()) do
             if not isPlayerInAnyEvent(playerId) then
                 TriggerClientEvent('peleg-events:showGlobalEventJoinPanel', playerId, {
@@ -539,7 +479,6 @@ AddEventHandler('peleg-events:stopEvent', function(eventId)
     end
     
     if event.type == "Party" then
-        -- Party events can be stopped regardless of status
         TriggerEvent('peleg-events:stopParty', eventId)
         event.status = "finished"
         event.finishedAt = os.time()
@@ -554,13 +493,11 @@ AddEventHandler('peleg-events:stopEvent', function(eventId)
         
         TriggerClientEvent('peleg-events:notification', src, 'success', 'Party event stopped and rewards distributed')
     else
-        -- For other event types, check if they are active
         if event.status ~= "active" then
             TriggerClientEvent('peleg-events:notification', src, 'error', 'Event is not active')
             return
         end
         
-        -- Handle stopping other event types here
         finishEvent(eventId)
     end
 end)
@@ -601,16 +538,13 @@ RegisterNetEvent('peleg-events:addKill', function(eventId, killerId, victimId)
 end)
 
 RegisterNetEvent('peleg-events:playerDied', function(eventId, playerId)
-    print("^3[Main] playerDied event received: eventId=" .. tostring(eventId) .. ", playerId=" .. tostring(playerId) .. "^7")
     local event = getActiveEvent(eventId)
     if not event then 
-        print("^1[Main] Event not found in playerDied handler^7")
         return 
     end
     for _, participant in pairs(event.participants) do
         if participant.id == playerId then
             participant.deathTime = os.time()
-            print("^3[Main] Set deathTime for player " .. playerId .. " to " .. os.time() .. "^7")
             break
         end
     end

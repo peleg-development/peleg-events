@@ -1,7 +1,6 @@
 local carSumoVehicles = {}
 local currentCarSumoEvent = nil
 
---- Spawn a Car Sumo vehicle for a player
 --- @param eventId string
 --- @param vehicleModel string
 --- @param spawnPos vector3|table
@@ -48,7 +47,6 @@ RegisterNetEvent('peleg-events:spawnCarSumoVehicle', function(eventId, vehicleMo
     end
 end)
 
---- Explode and remove Car Sumo vehicle
 --- @param eventId string
 RegisterNetEvent('peleg-events:explodeCarSumoVehicle', function(eventId)
     local vehicle = carSumoVehicles[eventId]
@@ -66,7 +64,6 @@ RegisterNetEvent('peleg-events:explodeCarSumoVehicle', function(eventId)
     end
 end)
 
---- Freeze or unfreeze Car Sumo vehicle
 --- @param eventId string
 --- @param freeze boolean
 RegisterNetEvent('peleg-events:freezeCarSumoVehicle', function(eventId, freeze)
@@ -80,7 +77,6 @@ RegisterNetEvent('peleg-events:freezeCarSumoVehicle', function(eventId, freeze)
     end
 end)
 
---- Car Sumo pre-start countdown
 --- @param eventId string
 --- @param duration number Seconds
 RegisterNetEvent('peleg-events:carSumoCountdown', function(eventId, duration)
@@ -90,7 +86,6 @@ RegisterNetEvent('peleg-events:carSumoCountdown', function(eventId, duration)
     end
 end)
 
---- Handle Car Sumo start
 --- @param eventId string
 RegisterNetEvent('peleg-events:carSumoStarted', function(eventId)
     if currentEventId == eventId or joinedEventId == eventId then
@@ -99,7 +94,6 @@ RegisterNetEvent('peleg-events:carSumoStarted', function(eventId)
     end
 end)
 
---- Cleanup Car Sumo vehicles when event ends
 --- @param eventId string
 RegisterNetEvent('peleg-events:carSumoEventEnded', function(eventId)
     if carSumoVehicles[eventId] then
@@ -113,7 +107,6 @@ RegisterNetEvent('peleg-events:carSumoEventEnded', function(eventId)
     end
 end)
 
---- Track collisions for Car Sumo damage events
 local damageTracker = {}
 
 AddEventHandler('gameEventTriggered', function(eventName, data)
